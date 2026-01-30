@@ -20,17 +20,14 @@ class ProductService
 
         return $query->latest()->paginate(10);
     }
-
-    /**
-     * Notun Product create kora (Business Logic ekhane thakbe)
-     */
     public function createProduct(array $data)
     {
         $data['slug'] = Str::slug($data['name']);
-        
-        // Jdi SKU na thake, auto generate hobe
-        if (!isset($data['sku'])) {
-            $data['sku'] = 'PRD-' . strtoupper(Str::random(8));
+        $data['sku']  = 'PRD-' . strtoupper(Str::random(8));
+
+        // Image upload logic
+        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+            $data['image'] = $data['image']->store('products', 'public');
         }
 
         return Product::create($data);
