@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductStoreRequest;
 
 class ProductController extends Controller
 {
@@ -23,5 +24,17 @@ class ProductController extends Controller
             'status' => 'success',
             'data'   => $products
         ]);
+    }
+
+
+    public function store(ProductStoreRequest $request)
+    {
+        $product = $this->productService->createProduct($request->validated());
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Product created successfully!',
+            'data'    => $product
+        ], 201);
     }
 }
