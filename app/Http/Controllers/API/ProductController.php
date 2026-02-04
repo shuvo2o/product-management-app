@@ -50,10 +50,26 @@ class ProductController extends Controller
                 'data' => $product
             ], 200);
         } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => $e->getMessage()
-        ], 500);
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function delete($id, ProductService $productService)
+    {
+        try {
+            $productService->deleteProduct($id);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Product Deleted Successfully.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 }

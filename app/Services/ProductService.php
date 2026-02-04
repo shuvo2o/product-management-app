@@ -57,4 +57,25 @@ class ProductService
             throw new Exception("Error Updating Product");
         }
     }
+
+    public function deleteProduct($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $product = Product::findOrFail($id);
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $product->delete();
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Product Delete Failed: " . $e->getMessage());
+
+            throw new \Exception("Failed to Delete Product");
+        }
+    }
 }
