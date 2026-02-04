@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use Exception;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
+use App\Http\Resources\ProductResource;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
 
@@ -17,58 +20,87 @@ class ProductController extends Controller
         $this->productService = $productService;
     }
 
+    /**
+     * Get all products with optional filters
+     */
     public function index(Request $request)
     {
-        $products = $this->productService->getAllProducts($request->category_id);
-
-        return response()->json([
-            'status' => 'success',
-            'data'   => $products
-        ]);
-    }
-
-
-    public function store(ProductStoreRequest $request)
-    {
-        $product = $this->productService->createProduct($request->validated());
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Product created successfully!',
-            'data'    => $product
-        ], 201);
-    }
-
-    public function update(ProductUpdateRequest $request, $id, ProductService $productService)
-    {
         try {
-            $product = $productService->updateProduct($id, $request->validated());
+            $products = $this->productService->getAllProducts($request);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Product Update SuccessFully',
-                'data' => $product
+                'data'   => ProductResource::collection($products)
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => 'Error to show product list'
             ], 500);
         }
     }
 
-    public function delete($id, ProductService $productService)
+    /**
+     * Store a newly created product
+     */
+    public function store(ProductStoreRequest $request)
     {
         try {
-            $productService->deleteProduct($id);
+            $product = $this->productService->createProduct($request->validated());
+
             return response()->json([
-                'status' => 'success',
+                'status'  => 'success',
+                'message' => 'Product created successfully!',
+                'data'    => new ProductResource($product)
+            ], 201);
+        } catch (Exception $e) {
+            Log::error("Product Store Error: " . $e->getMessage());
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Error to store product'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update an existing product
+     */
+    public function update(ProductUpdateRequest $request, $id)
+    {
+        try {
+            $product = $this->productService->updateProduct($id, $request->validated());
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Product Updated Successfully',
+                'data'    => new ProductResource($product)
+            ], 200);
+        } catch (Exception $e) {
+            Log::error("Product Update Error [ID: $id]: " . $e->getMessage());
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Error to store product'
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a product
+     */
+    public function delete($id)
+    {
+        try {
+            $this->productService->deleteProduct($id);
+
+            return response()->json([
+                'status'  => 'success',
                 'message' => 'Product Deleted Successfully.'
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            Log::error("Product Delete Error [ID: $id]: " . $e->getMessage());
             return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage()
+                'status'  => 'error',
+                'message' => 'Error to Delete product'
             ], 500);
         }
     }
