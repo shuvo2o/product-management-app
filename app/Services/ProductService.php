@@ -12,14 +12,16 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductService
 {
-    public function getAllProducts($categoryId = null)
+    public function getAllProducts($request)
     {
-        $query = Product::with('category'); // Eager Loading (Performance er jonno)
-
-        if ($categoryId) {
-            $query->where('category_id', $categoryId);
+        $query = Product::query()->with('category');
+        if ($request->has('search') && $request->search != null) {
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
+        if ($request->has('category_id') && $request->category_id != null) {
+            $query->where('category_id', $request->category_id);
+        }
         return $query->latest()->paginate(10);
     }
     public function createProduct(array $data)
