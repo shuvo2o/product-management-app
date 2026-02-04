@@ -12,16 +12,19 @@ class ProductResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+    public function toArray($request)
     {
         return [
             'id'          => $this->id,
             'name'        => $this->name,
-            'price'       => (float) $this->price,
-            'stock'       => (int) $this->stock,
-            'image_url'   => $this->image ? asset('storage/' . $this->image) : null,
-            'category'    => new CategoryResource($this->whenLoaded('category')),
-            'updated_at'  => $this->updated_at->toDateTimeString(),
+            'slug'        => $this->slug,
+            'sku'         => $this->sku,
+            'description' => $this->description,
+            'price'       => $this->price,
+            'stock'       => $this->stock,
+            'status'      => $this->status,
+            'image'       => $this->image ? asset('storage/' . $this->image) : null,
+            'category'    => $this->category->name ?? 'N/A',
         ];
     }
 }

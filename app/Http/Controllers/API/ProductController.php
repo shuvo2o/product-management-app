@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\API;
 
 use Exception;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
@@ -26,16 +27,32 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         try {
-            $products = $this->productService->getAllProducts($request);
+            // সার্ভিস থেকে পেজিনেটেড ডাটা আনা (১০টি করে)
+            // নোট: আপনার সার্ভিস ফাইলে যদি paginate করার মেথড না থাকে, তবে নিচের কোডটি ব্যবহার করুন
+            $query = Product::with('category');
+
+            if ($request->has('search')) {
+                $query->where('name', 'like', '%' . $request->search . '%');
+            }
+
+            $products = $query->latest()->paginate(10);
 
             return response()->json([
-                'status' => 'success',
-                'data'   => ProductResource::collection($products)
+                'status'  => 'success',
+                'message' => 'Products retrieved successfully!',
+                'data'    => ProductResource::collection($products), // ডাটা রিসোর্সে কনভার্ট হবে
+                'meta'    => [
+                    'current_page' => $products->currentPage(),
+                    'last_page'    => $products->lastPage(),
+                    'total'        => $products->total(),
+                    'links'        => $products->linkCollection(), // এটি রিঅ্যাক্ট পেজিনেশনের জন্য জরুরি
+                ]
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            Log::error("Product Index Error: " . $e->getMessage());
             return response()->json([
-                'status' => 'error',
-                'message' => 'Error to show product list'
+                'status'  => 'error',
+                'message' => 'Error fetching products'
             ], 500);
         }
     }
