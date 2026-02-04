@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
+use Exception;
 use App\Models\Product;
 use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProductService
 {
-    /**
-     * Product list fetch kora (Pagination ebong Category Filter shoho)
-     */
     public function getAllProducts($categoryId = null)
     {
         $query = Product::with('category'); // Eager Loading (Performance er jonno)
@@ -31,5 +33,28 @@ class ProductService
         }
 
         return Product::create($data);
+    }
+    public function updateProduct($id, array $data)
+    {
+        DB::beginTransaction();
+        try {
+            $product = Product::findOrFail($id);
+            if (isset($data['name'])) {
+                $data['slug'] = Str::slug($data['name']);
+            }
+            if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
+                if ($product->image) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                $data['image'] = $data['image']->store('products', 'public');
+            }
+            $product->update($data);
+            DB::commit();
+            return $product;
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error("Product Update Failed: " . $e->getMessage());
+            throw new Exception("Error Updating Product");
+        }
     }
 }
