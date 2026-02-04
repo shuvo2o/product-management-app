@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\ProductService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductStoreRequest;
+use App\Http\Requests\ProductUpdateRequest;
 
 class ProductController extends Controller
 {
@@ -36,5 +37,23 @@ class ProductController extends Controller
             'message' => 'Product created successfully!',
             'data'    => $product
         ], 201);
+    }
+
+    public function update(ProductUpdateRequest $request, $id, ProductService $productService)
+    {
+        try {
+            $product = $productService->updateProduct($id, $request->validated());
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Product Update SuccessFully',
+                'data' => $product
+            ], 200);
+        } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+        }
     }
 }
