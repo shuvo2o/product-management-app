@@ -2,10 +2,15 @@ import './bootstrap';
 import '../css/app.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.jsx'; // App.jsx কে ইম্পোর্ট করছি
+import { BrowserRouter } from 'react-router-dom';
+import App from './App.jsx';
 
 const container = document.getElementById('app');
 if (container) {
     const root = createRoot(container);
-    root.render(<App />);
+    root.render(
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    );
 }

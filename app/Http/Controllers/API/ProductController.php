@@ -78,6 +78,19 @@ class ProductController extends Controller
             ], 500);
         }
     }
+   public function show($id)
+{
+    $product = Product::find($id);
+
+    if (!$product) {
+        return response()->json(['status' => 'error', 'message' => 'Not Found'], 404);
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'data'   => $product // অথবা new ProductResource($product)
+    ], 200);
+}
 
     /**
      * Update an existing product
