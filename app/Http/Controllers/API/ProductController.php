@@ -28,25 +28,23 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         try {
-            // সার্ভিস থেকে পেজিনেটেড ডাটা আনা (১০টি করে)
-            // নোট: আপনার সার্ভিস ফাইলে যদি paginate করার মেথড না থাকে, তবে নিচের কোডটি ব্যবহার করুন
             $query = Product::with('category');
 
             if ($request->has('search')) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             }
 
-            $products = $query->latest()->paginate(10);
+            $products = $query->latest()->paginate(20);
 
             return response()->json([
                 'status'  => 'success',
                 'message' => 'Products retrieved successfully!',
-                'data'    => ProductResource::collection($products), // ডাটা রিসোর্সে কনভার্ট হবে
+                'data'    => ProductResource::collection($products),
                 'meta'    => [
                     'current_page' => $products->currentPage(),
                     'last_page'    => $products->lastPage(),
                     'total'        => $products->total(),
-                    'links'        => $products->linkCollection(), // এটি রিঅ্যাক্ট পেজিনেশনের জন্য জরুরি
+                    'links'        => $products->linkCollection(),
                 ]
             ], 200);
         } catch (Exception $e) {
@@ -61,38 +59,37 @@ class ProductController extends Controller
     /**
      * Store a newly created product
      */
-public function store(ProductStoreRequest $request)
-{
-    try {
-        // productService-এ validated ডাটা পাঠানো হচ্ছে যেখানে category_id আছে
-        $product = $this->productService->createProduct($request->validated());
+    public function store(ProductStoreRequest $request)
+    {
+        try {
+            $product = $this->productService->createProduct($request->validated());
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Product created successfully!',
+                'data'    => new ProductResource($product)
+            ], 201);
+        } catch (Exception $e) {
+            Log::error("Product Store Error: " . $e->getMessage());
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Error to store product'
+            ], 500);
+        }
+    }
+    public function show($id)
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json(['status' => 'error', 'message' => 'Not Found'], 404);
+        }
 
         return response()->json([
-            'status'  => 'success',
-            'message' => 'Product created successfully!',
-            'data'    => new ProductResource($product)
-        ], 201);
-    } catch (Exception $e) {
-        Log::error("Product Store Error: " . $e->getMessage());
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'Error to store product'
-        ], 500);
+            'status' => 'success',
+            'data'   => $product
+        ], 200);
     }
-}
-   public function show($id)
-{
-    $product = Product::find($id);
-
-    if (!$product) {
-        return response()->json(['status' => 'error', 'message' => 'Not Found'], 404);
-    }
-
-    return response()->json([
-        'status' => 'success',
-        'data'   => $product // অথবা new ProductResource($product)
-    ], 200);
-}
 
     /**
      * Update an existing product
