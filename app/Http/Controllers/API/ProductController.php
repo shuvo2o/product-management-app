@@ -4,14 +4,15 @@ namespace App\Http\Controllers\API;
 
 use Exception;
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
-use App\Models\Category;
 
 class ProductController extends Controller
 {
@@ -59,6 +60,43 @@ class ProductController extends Controller
     /**
      * Store a newly created product
      */
+
+    public function getStats()
+    {
+        try {
+            // ১. মোট প্রোডাক্ট সংখ্যা
+            $totalProducts = Product::count();
+
+            // ২. স্টক শেষ হয়ে গেছে এমন প্রোডাক্ট (Stock = 0)
+            $outOfStock = Product::where('stock', '<=', 0)->count();
+
+            // ৩. লো স্টক এলার্ট (স্টক ১ থেকে ৫ এর মধ্যে)
+            $lowStock = Product::where('stock', '>', 0)
+                ->where('stock', '<=', 5)
+                ->count();
+
+            // ৪. মোট ইনভেন্টরি ভ্যালু (Price * Stock এর যোগফল)
+            $totalValue = Product::select(DB::raw('SUM(price * stock) as total'))
+                ->first()
+                ->total;
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Dashboard statistics retrieved successfully',
+                'data'    => [
+                    'total_products' => $totalProducts,
+                    'out_of_stock'   => $outOfStock,
+                    'low_stock'      => $lowStock,
+                    'total_value'    => number_format($totalValue ?? 0, 2, '.', ''), // ২ ডেসিমেল পর্যন্ত ডাটা
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Failed to retrieve statistics: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     public function store(ProductStoreRequest $request)
     {
         try {

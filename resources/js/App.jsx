@@ -5,6 +5,7 @@ import Create from './Pages/Admin/Product/Create';
 import Index from './Pages/Admin/Product/Index';
 import Edit from './Pages/Admin/Product/Edit';
 import AdminLayout from './Layouts/AdminLayout'; 
+import Dashboard from './Pages/Admin/Dashboard';
 
 const App = () => {
     return (
@@ -17,6 +18,7 @@ const App = () => {
                             <Route path="products" element={<Index />} />
                             <Route path="/products/create" element={<Create />} />
                             <Route path="products/edit/:id" element={<Edit />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
                         </Routes>
                     </AdminLayout>
                 } />
