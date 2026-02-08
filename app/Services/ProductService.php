@@ -41,22 +41,28 @@ class ProductService
         DB::beginTransaction();
         try {
             $product = Product::findOrFail($id);
-            if (isset($data['name'])) {
-                $data['slug'] = Str::slug($data['name']);
+            $updateData = collect($data)->except(['_method'])->toArray();
+
+            if (isset($updateData['name'])) {
+                $updateData['slug'] = Str::slug($updateData['name']);
             }
             if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
                 if ($product->image) {
                     Storage::disk('public')->delete($product->image);
                 }
-                $data['image'] = $data['image']->store('products', 'public');
+                $updateData['image'] = $data['image']->store('products', 'public');
+            } else {
+                unset($updateData['image']);
             }
-            $product->update($data);
+
+            $product->update($updateData);
+
             DB::commit();
             return $product;
         } catch (Exception $e) {
             DB::rollBack();
             Log::error("Product Update Failed: " . $e->getMessage());
-            throw new Exception("Error Updating Product");
+            throw new Exception("Error Updating Product: " . $e->getMessage());
         }
     }
 
