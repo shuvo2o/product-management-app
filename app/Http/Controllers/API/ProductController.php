@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
+use App\Models\Category;
 
 class ProductController extends Controller
 {
@@ -60,24 +61,25 @@ class ProductController extends Controller
     /**
      * Store a newly created product
      */
-    public function store(ProductStoreRequest $request)
-    {
-        try {
-            $product = $this->productService->createProduct($request->validated());
+public function store(ProductStoreRequest $request)
+{
+    try {
+        // productService-এ validated ডাটা পাঠানো হচ্ছে যেখানে category_id আছে
+        $product = $this->productService->createProduct($request->validated());
 
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Product created successfully!',
-                'data'    => new ProductResource($product)
-            ], 201);
-        } catch (Exception $e) {
-            Log::error("Product Store Error: " . $e->getMessage());
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Error to store product'
-            ], 500);
-        }
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Product created successfully!',
+            'data'    => new ProductResource($product)
+        ], 201);
+    } catch (Exception $e) {
+        Log::error("Product Store Error: " . $e->getMessage());
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Error to store product'
+        ], 500);
     }
+}
    public function show($id)
 {
     $product = Product::find($id);
