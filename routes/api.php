@@ -19,3 +19,6 @@ Route::delete('/products/{id}', [ProductController::class, 'delete']);
 Route::get('/categories', function () {
     return response()->json(Category::all());
 });
+
+// dashboard
+Route::get('/dashboard/stats', [ProductController::class, 'getStats']);

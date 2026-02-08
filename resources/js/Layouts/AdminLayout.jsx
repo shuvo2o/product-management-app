@@ -5,7 +5,6 @@ const AdminLayout = ({ children }) => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // মেনু আইটেমগুলো এখানে ডিফাইন করা যাতে সহজে ম্যানেজ করা যায়
     const menuItems = [
         { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
         { name: 'Products List', path: '/admin/products', icon: '📦' },
