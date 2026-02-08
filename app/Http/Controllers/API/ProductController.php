@@ -64,39 +64,33 @@ class ProductController extends Controller
     public function getStats()
     {
         try {
-            // ১. মোট প্রোডাক্ট সংখ্যা
             $totalProducts = Product::count();
+            $outOfStock    = Product::where('stock', '<=', 0)->count();
+            $lowStock      = Product::where('stock', '>', 0)->where('stock', '<=', 5)->count();
+            $totalValue    = Product::select(DB::raw('SUM(price * stock) as total'))->first()->total;
 
-            // ২. স্টক শেষ হয়ে গেছে এমন প্রোডাক্ট (Stock = 0)
-            $outOfStock = Product::where('stock', '<=', 0)->count();
-
-            // ৩. লো স্টক এলার্ট (স্টক ১ থেকে ৫ এর মধ্যে)
-            $lowStock = Product::where('stock', '>', 0)
-                ->where('stock', '<=', 5)
-                ->count();
-
-            // ৪. মোট ইনভেন্টরি ভ্যালু (Price * Stock এর যোগফল)
-            $totalValue = Product::select(DB::raw('SUM(price * stock) as total'))
-                ->first()
-                ->total;
+            $recentProducts = Product::with('category')->latest()->take(5)->get();
 
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Dashboard statistics retrieved successfully',
                 'data'    => [
-                    'total_products' => $totalProducts,
-                    'out_of_stock'   => $outOfStock,
-                    'low_stock'      => $lowStock,
-                    'total_value'    => number_format($totalValue ?? 0, 2, '.', ''), // ২ ডেসিমেল পর্যন্ত ডাটা
+                    'stats' => [
+                        'total_products' => $totalProducts,
+                        'out_of_stock'   => $outOfStock,
+                        'low_stock'      => $lowStock,
+                        'total_value'    => number_format($totalValue ?? 0, 2, '.', ''),
+                    ],
+                    'recent_products' => ProductResource::collection($recentProducts)
                 ]
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Failed to retrieve statistics: ' . $e->getMessage()
+                'message' => 'Failed to load dashboard data: ' . $e->getMessage()
             ], 500);
         }
     }
+
     public function store(ProductStoreRequest $request)
     {
         try {
