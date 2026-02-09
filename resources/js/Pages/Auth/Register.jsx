@@ -13,7 +13,7 @@ const Register = () => {
         try {
             const res = await axios.post('http://localhost:8000/api/register', formData);
             alert(res.data.message);
-            navigate('/login'); // সফল হলে লগইন পেজে নিয়ে যাবে
+            navigate('/login'); 
         } catch (err) {
             console.error(err.response.data);
             alert("Registration Failed! Please check your details.");
@@ -23,7 +23,7 @@ const Register = () => {
     return (
         <div className="flex min-h-screen bg-gray-100">
             {/* Left Side: Gradient Section */}
-            <div className="flex-col items-center justify-center hidden w-1/2 p-12 text-white lg:flex bg-gradient-to-br from-blue-600 to-indigo-800">
+            <div className="flex-col items-center justify-center hidden w-1/2 p-12 text-white lg:flex bg-linear-to-br from-blue-600 to-indigo-800">
                 <div className="max-w-md text-center">
                     <h1 className="mb-6 text-5xl font-bold">Get Started</h1>
                     <p className="mb-8 text-lg text-blue-100">

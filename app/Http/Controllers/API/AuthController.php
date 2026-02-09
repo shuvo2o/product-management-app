@@ -42,12 +42,9 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $user = \App\Models\User::where('email', $request->email)->first();
-
-        // সরাসরি পাসওয়ার্ড চেক
+        $user =User::where('email', $request->email)->first();
         if ($user && \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
 
-            // চেক করুন ইউজার কি অনুমোদিত?
             if (!$user->is_approved) {
                 return response()->json(['message' => 'Your account is pending approval.'], 403);
             }
@@ -64,10 +61,13 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Invalid Email or Password!'], 401);
     }
-    // ৩. লগআউট
     public function logout(Request $request)
     {
+        
         $request->user()->token()->revoke();
-        return response()->json(['message' => 'Successfully logged out']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully logged out'
+        ], 200);
     }
 }

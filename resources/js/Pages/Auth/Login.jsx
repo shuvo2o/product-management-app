@@ -10,17 +10,14 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            // আপনার ব্যাকএন্ড এপিআই ইউআরএল নিশ্চিত করুন
             const res = await axios.post('http://localhost:8000/api/login', { email, password });
             
-            // টোকেন এবং রোল লোকাল স্টোরেজে সেভ করা
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('role', res.data.role[0]); 
             localStorage.setItem('user', JSON.stringify(res.data.user));
 
             alert("Login Successful!");
 
-            // রোল অনুযায়ী ড্যাশবোর্ডে রিডাইরেক্ট
             const role = res.data.role[0];
             if (role === 'superadmin' || role === 'admin') {
                 navigate('/admin/dashboard');
@@ -39,8 +36,7 @@ const Login = () => {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            {/* Left Side: Gradient Section (Register পেজের সাথে মিল রেখে) */}
-            <div className="flex-col items-center justify-center hidden w-1/2 p-12 text-white lg:flex bg-gradient-to-br from-indigo-800 to-blue-600">
+            <div className="flex-col items-center justify-center hidden w-1/2 p-12 text-white lg:flex bg-linear-to-br from-indigo-800 to-blue-600">
                 <div className="max-w-md text-center">
                     <h1 className="mb-6 text-5xl font-bold">Welcome Back!</h1>
                     <p className="mb-8 text-lg text-blue-100">
