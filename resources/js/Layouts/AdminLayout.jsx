@@ -7,16 +7,16 @@ const AdminLayout = ({ children }) => {
 
     const menuItems = [
         { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
+        { name: 'Categories', path: '/admin/categories', icon: '📂' },
         { name: 'Products List', path: '/admin/products', icon: '📦' },
         { name: 'Add New Product', path: '/admin/products/create', icon: '➕' },
-        { name: 'Categories', path: '/admin/categories', icon: '📂' },
         { name: 'Users Management', path: '/admin/users', icon: '👥' },
     ];
 
     return (
         <div className="flex min-h-screen bg-gray-100">
             {/* Sidebar - Desktop */}
-            <aside className="flex-col flex-shrink-0 hidden w-64 text-white bg-slate-900 md:flex">
+            <aside className="flex-col hidden w-64 text-white shrink-0 bg-slate-900 md:flex">
                 <div className="p-6 border-b border-slate-800">
                     <h1 className="text-xl font-bold tracking-wider text-indigo-400">ADMIN <span className="text-white">HUB</span></h1>
                 </div>
