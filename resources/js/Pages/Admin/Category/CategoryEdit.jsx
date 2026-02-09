@@ -38,7 +38,7 @@ const CategoryEdit = () => {
                             required 
                         />
                     </div>
-                    <button className="w-full py-3 font-bold text-white transition-all bg-green-600 shadow-lg rounded-xl hover:bg-green-700">Update Category</button>
+                    <button className="w-full py-3 font-bold text-white transition-all bg-indigo-600 shadow-lg rounded-xl hover:bg-indigo-700">Update Category</button>
                 </form>
             </div>
         </div>

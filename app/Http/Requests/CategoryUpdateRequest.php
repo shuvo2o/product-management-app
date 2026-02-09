@@ -11,12 +11,12 @@ class CategoryUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; 
+        return true;
     }
 
     public function rules(): array
     {
-  
+
         $categoryId = $this->route('category') ?? $this->route('id');
 
         return [
