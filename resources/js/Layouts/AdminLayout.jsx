@@ -1,9 +1,63 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import Swal from 'sweetalert2'; // SweetAlert ইমপোর্ট
 
 const AdminLayout = ({ children }) => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // লগআউট ফাংশনালিটি উইথ সুইট অ্যালার্ট
+    const handleLogout = () => {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You will be logged out from your account!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4F46E5', // Indigo-600 (আপনার থিমের সাথে মিল রেখে)
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Logout!',
+            cancelButtonText: 'Cancel',
+            background: '#fff',
+            borderRadius: '15px'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const token = localStorage.getItem('token');
+                    
+                    // ব্যাকএন্ড এপিআই কল (যদি রাউট তৈরি থাকে)
+                    await axios.post('http://localhost:8000/api/logout', {}, {
+                        headers: { 
+                            Authorization: `Bearer ${token}`,
+                            Accept: 'application/json'
+                        }
+                    });
+                } catch (error) {
+                    console.error("Logout API Error:", error);
+                } finally {
+                    // লোকাল ডাটা ক্লিয়ার
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('role');
+                    localStorage.removeItem('user');
+
+                    // সাকসেস মেসেজ দেখানো
+                    Swal.fire({
+                        title: 'Logged Out!',
+                        text: 'Redirecting to login page...',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // ১.৫ সেকেন্ড পর লগইন পেজে পাঠানো
+                    setTimeout(() => {
+                        navigate('/login');
+                    }, 1500);
+                }
+            }
+        });
+    };
 
     const menuItems = [
         { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
@@ -12,6 +66,9 @@ const AdminLayout = ({ children }) => {
         { name: 'Add New Product', path: '/admin/products/create', icon: '➕' },
         { name: 'Users Management', path: '/admin/users', icon: '👥' },
     ];
+
+    // ইউজার নেম ডাইনামিক করা (যদি লোকাল স্টোরেজে থাকে)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     return (
         <div className="flex min-h-screen bg-gray-100">
@@ -48,7 +105,10 @@ const AdminLayout = ({ children }) => {
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
-                    <button className="flex items-center w-full gap-3 px-4 py-3 text-red-400 transition hover:bg-red-900/20 rounded-xl">
+                    <button 
+                        onClick={handleLogout} 
+                        className="flex items-center w-full gap-3 px-4 py-3 text-red-400 transition hover:bg-red-900/20 rounded-xl"
+                    >
                         <span>🚪</span>
                         <span className="text-sm font-bold">Logout</span>
                     </button>
@@ -65,11 +125,11 @@ const AdminLayout = ({ children }) => {
 
                     <div className="flex items-center gap-4">
                         <div className="hidden text-right sm:block">
-                            <p className="text-sm font-bold leading-none text-gray-800">Your Name</p>
-                            <p className="text-[10px] text-gray-400 font-bold">Administrator</p>
+                            <p className="text-sm font-bold leading-none text-gray-800">{user.name || 'Your Name'}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">{localStorage.getItem('role') || 'Administrator'}</p>
                         </div>
                         <div className="flex items-center justify-center w-10 h-10 font-bold text-indigo-700 bg-indigo-100 border border-indigo-200 rounded-full">
-                            AD
+                            {user.name ? user.name.substring(0, 2).toUpperCase() : 'AD'}
                         </div>
                     </div>
                 </header>
