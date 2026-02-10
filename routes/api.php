@@ -6,8 +6,9 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
-
-
+use App\Http\Controllers\API\AdminController;
+use App\Http\Controllers\API\ModeratorController;
+use App\Http\Controllers\API\SuperAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,58 +18,55 @@ use App\Http\Controllers\API\CategoryController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::controller(ProductController::class)->group(function () {
-    Route::get('/products', 'index');
-    Route::get('/products/{id}', 'show');
-});
-
+// ডাটা দেখার জন্য পাবলিক রাউট
 Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{id}', [ProductController::class, 'show']);
 
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (Auth via Passport)
+| Protected Routes (Auth & Approval Required)
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'approved'])->group(function () {
 
-    // Common Auth Routes
-    Route::get('/profile', fn(Request $request) => $request->user());
+    // ১. সাধারণ ইউজার রাউট
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/dashboard/stats', [ProductController::class, 'getStats']);
+    Route::get('/profile', fn(Request $request) => $request->user());
+    Route::get('/dashboard/stats', [AdminController::class, 'index']); 
 
-    /*--- Superadmin Only ---*/
-    Route::middleware(['role:superadmin'])->group(function () {
-        Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
-    });
-
-    /*--- Superadmin | Admin ---*/
-    Route::middleware(['role:superadmin|admin'])->group(function () {
+    /*
+    |----------------------------------------------------------------------
+    | মাস্টার গ্রুপ: এই গ্রুপের ভেতরের সব কাজ শুধুমাত্র সুপারঅ্যাডমিন পারবে
+    |----------------------------------------------------------------------
+    */
+    Route::middleware(['admin'])->group(function () {
+        
+        // সুপারঅ্যাডমিন ড্যাশবোর্ড
+        Route::get('/superadmin/stats', [SuperAdminController::class, 'index']);
+        
+        // ইউজার ম্যানেজমেন্ট
         Route::controller(UserController::class)->group(function () {
             Route::get('/pending-users', 'pendingUsers');
             Route::post('/approve-user/{id}', 'approveUser');
-            Route::post('/users/{id}/approve', 'approve');
             Route::delete('/users/{id}', 'destroy');
+            Route::post('/users/{id}/assign-role', 'assignRole');
         });
 
+        // ক্যাটাগরি ম্যানেজমেন্ট (A to Z)
+        Route::post('/categories', [CategoryController::class, 'store']); // এটিই আপনার মেইন এরর ছিল
+        Route::put('/categories/{id}', [CategoryController::class, 'update']);
         Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+
+        // প্রোডাক্ট ম্যানেজমেন্ট (A to Z)
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::post('/products/{id}', [ProductController::class, 'update']); 
         Route::delete('/products/{id}', [ProductController::class, 'delete']);
+        Route::get('/stock-history', [ProductController::class, 'getStockHistory']);
+
+        // মডারেটর স্ট্যাটাস (সুপারঅ্যাডমিন চাইলে দেখতে পারবে)
+        Route::get('/moderator/stats', [ModeratorController::class, 'index']);
     });
 
-    /*--- Superadmin | Admin | Moderator ---*/
-    Route::middleware(['role:superadmin|admin|moderator'])->group(function () {
-        
-        // Product Management
-        Route::controller(ProductController::class)->group(function () {
-            Route::post('/products', 'store');
-            Route::post('/products/{id}', 'update'); 
-            Route::get('/stock-history', 'getStockHistory');
-        });
-
-        // Category Management
-        Route::controller(CategoryController::class)->group(function () {
-            Route::post('/categories', 'store');
-            Route::put('/categories/{id}', 'update');
-        });
-    });
 });

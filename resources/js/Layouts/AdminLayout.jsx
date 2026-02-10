@@ -8,6 +8,9 @@ const AdminLayout = ({ children }) => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // ১. লোকাল স্টোরেজ থেকে ইউজারের রোল গেট করা
+    const userRole = localStorage.getItem('role');
+
     const handleLogout = () => {
         Swal.fire({
             title: 'Are you sure?',
@@ -53,14 +56,18 @@ const AdminLayout = ({ children }) => {
         });
     };
 
-    const menuItems = [
-        { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
-        { name: 'Categories', path: '/admin/categories', icon: '📂' },
-        { name: 'Products List', path: '/admin/products', icon: '📦' },
-        { name: 'Add New Product', path: '/admin/products/create', icon: '➕' },
-        { name: 'Users Management', path: '/admin/users', icon: '👥' }, 
-        { name: 'Stock History', path: '/admin/stock-history', icon: '👥' }, 
+    // ২. মেনু আইটেমগুলোকে রোল অনুযায়ী ফিল্টার করা
+    const allMenuItems = [
+        { name: 'Dashboard', path: '/admin/dashboard', icon: '📊', roles: ['superadmin', 'admin', 'moderator', 'user'] },
+        { name: 'Categories', path: '/admin/categories', icon: '📂', roles: ['superadmin'] },
+        { name: 'Products List', path: '/admin/products', icon: '📦', roles: ['superadmin'] },
+        { name: 'Add New Product', path: '/admin/products/create', icon: '➕', roles: ['superadmin'] },
+        { name: 'Users Management', path: '/admin/users', icon: '👥', roles: ['superadmin'] }, 
+        { name: 'Stock History', path: '/admin/stock-history', icon: '📜', roles: ['superadmin'] }, 
     ];
+
+    // শুধুমাত্র সেই মেনুগুলো ফিল্টার করা হচ্ছে যেগুলোতে ইউজারের পারমিশন আছে
+    const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const currentMenuItem = menuItems.find(item => location.pathname === item.path) || 
@@ -120,7 +127,7 @@ const AdminLayout = ({ children }) => {
                     <div className="flex items-center gap-4">
                         <div className="hidden text-right sm:block">
                             <p className="text-sm font-bold leading-none text-gray-800">{user.name || 'Your Name'}</p>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase">{localStorage.getItem('role') || 'Administrator'}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">{userRole || 'Administrator'}</p>
                         </div>
                         <div className="flex items-center justify-center w-10 h-10 font-bold text-indigo-700 bg-indigo-100 border border-indigo-200 rounded-full">
                             {user.name ? user.name.substring(0, 2).toUpperCase() : 'AD'}

@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\API; 
+namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Exception;
 
@@ -17,7 +16,7 @@ class UserController extends Controller
             $users = User::where('is_approved', 0)->latest()->get();
             return response()->json([
                 'status' => 'success',
-                'data' => $users // এখানে 'data' কী-তে লিস্ট পাঠানো হচ্ছে
+                'data' => $users 
             ], 200);
         } catch (Exception $e) {
             return response()->json([

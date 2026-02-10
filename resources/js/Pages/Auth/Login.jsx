@@ -11,7 +11,6 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await axios.post('http://localhost:8000/api/login', { email, password });
-            
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('role', res.data.role[0]); 
             localStorage.setItem('user', JSON.stringify(res.data.user));
@@ -19,10 +18,15 @@ const Login = () => {
             alert("Login Successful!");
 
             const role = res.data.role[0];
-            if (role === 'superadmin' || role === 'admin') {
+            
+            if (role === 'superadmin') {
+                navigate('/super-admin/dashboard');
+            } else if (role === 'admin') {
                 navigate('/admin/dashboard');
+            } else if (role === 'moderator') {
+                navigate('/moderator/dashboard');
             } else {
-                navigate('/user/dashboard');
+                navigate('/dashboard'); 
             }
 
         } catch (err) {
@@ -36,6 +40,7 @@ const Login = () => {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
+            {/* Left Side: Illustration Section */}
             <div className="flex-col items-center justify-center hidden w-1/2 p-12 text-white lg:flex bg-linear-to-br from-indigo-800 to-blue-600">
                 <div className="max-w-md text-center">
                     <h1 className="mb-6 text-5xl font-bold">Welcome Back!</h1>

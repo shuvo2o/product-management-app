@@ -1,11 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { FaUserCircle } from "react-icons/fa";
 
 const App = () => {
     const [products, setProducts] = useState([]);
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+
+    // --- AUTH LOGIC START ---
+    const [user, setUser] = useState(null);
+    const token = localStorage.getItem('token');
+
+    useEffect(() => {
+        if (token) {
+            const savedUser = JSON.parse(localStorage.getItem('user'));
+            if (savedUser) setUser(savedUser);
+        }
+    }, [token]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        window.location.reload(); 
+    };
+    // --- AUTH LOGIC END ---
+
     const fetchProducts = (url = '/api/products') => {
         setLoading(true);
         let fetchUrl = url;
@@ -24,6 +45,7 @@ const App = () => {
                 setLoading(false);
             });
     };
+
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchProducts();
@@ -42,6 +64,7 @@ const App = () => {
                     <p className="text-sm text-gray-500">Manage your inventory details with ease</p>
                 </div>
 
+                {/* Search Bar */}
                 <div className="relative w-full md:w-96">
                     <input
                         type="text"
@@ -56,6 +79,37 @@ const App = () => {
                         </svg>
                     </div>
                 </div>
+
+                {/* --- REACT ICON PROFILE SECTION --- */}
+                <div className="flex items-center gap-3">
+                    {user ? (
+                        <div className="flex items-center gap-3 p-1.5 pr-3">
+                            {/* Profile Icon with Dynamic Link */}
+                            <a 
+                                href={
+                                    user.role === 'superadmin' ? '/super-admin/dashboard' :
+                                    user.role === 'admin' ? '/admin/dashboard' :
+                                    user.role === 'moderator' ? '/moderator/dashboard' : '/user/dashboard'
+                                }
+                                title={`Welcome ${user.name}! Click for Dashboard`}
+                                className="text-indigo-600 transition-transform duration-200 hover:scale-110"
+                            >
+                                <FaUserCircle size={30} />
+                            </a>
+
+                     
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <a href="/login" className="px-5 py-2.5 text-sm font-bold text-gray-700 transition-all bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
+                                Login
+                            </a>
+                            <a href="/register" className="hidden sm:block px-5 py-2.5 text-sm font-bold text-white transition-all bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-md">
+                                Register
+                            </a>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {loading ? (
@@ -65,6 +119,7 @@ const App = () => {
                 </div>
             ) : (
                 <>
+                    {/* Products Grid */}
                     <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {products.length > 0 ? (
                             products.map((product) => (
@@ -79,10 +134,7 @@ const App = () => {
                                         ) : (
                                             <div className="flex items-center justify-center h-full text-xs italic text-gray-400">No Image Available</div>
                                         )}
-
-                                        {/* Status Badge */}
-                                        <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase shadow-sm ${product.status === 'active' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                                            }`}>
+                                        <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase shadow-sm ${product.status === 'active' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
                                             {product.status}
                                         </span>
                                     </div>
@@ -95,20 +147,15 @@ const App = () => {
                                                 SKU: {product.sku}
                                             </span>
                                         </div>
-
                                         <h2 className="mb-1 text-lg font-bold leading-tight text-gray-800 truncate" title={product.name}>
                                             {product.name}
                                         </h2>
                                         <p className="text-gray-400 text-[10px] mb-3 truncate italic bg-gray-50 p-1 rounded">
                                             Slug: {product.slug}
                                         </p>
-
-                                        {/* Description */}
                                         <p className="mb-5 text-xs leading-relaxed text-gray-500 line-clamp-3">
                                             {product.description || 'No detailed description provided for this product.'}
                                         </p>
-
-                                        {/* Price & Stock */}
                                         <div className="flex items-center justify-between pt-4 mt-auto border-t border-gray-50">
                                             <div>
                                                 <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Current Price</p>
@@ -131,7 +178,7 @@ const App = () => {
                         )}
                     </div>
 
-                    {/* Pagination Section */}
+                    {/* Pagination */}
                     <div className="flex flex-wrap justify-center gap-3 pb-10 mt-16">
                         {links && links.map((link, index) => (
                             <button
