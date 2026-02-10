@@ -11,7 +11,8 @@ import CategoryCreate from './Pages/Admin/Category/CategoryCreate';
 import CategoryEdit from './Pages/Admin/Category/CategoryEdit';
 import Login from './Pages/Auth/Login';
 import Register from './Pages/Auth/Register';
-import UsersManagement from './Pages/Admin/UsersManagement'; // ১. নতুন ইমপোর্ট
+import UsersManagement from './Pages/Admin/UsersManagement'; 
+import StockHistory from './Pages/Admin/StockHistory';
 
 const ProtectedRoute = ({ children }) => {
     const token = localStorage.getItem('token');
@@ -42,7 +43,8 @@ const App = () => {
                                 <Route path="categories" element={<CategoryIndex />} />
                                 <Route path="categories/create" element={<CategoryCreate />} />
                                 <Route path="categories/edit/:id" element={<CategoryEdit />} />
-                                <Route path="users" element={<UsersManagement />} /> {/* ২. নতুন রাউট */}
+                                <Route path="users" element={<UsersManagement />} />
+                                <Route path="/stock-history" element={<StockHistory />} /> 
                             </Routes>
                         </AdminLayout>
                     </ProtectedRoute>

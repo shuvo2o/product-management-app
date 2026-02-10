@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use Exception;
 use App\Models\Product;
-use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Http\Requests\ProductStoreRequest;
 use App\Http\Requests\ProductUpdateRequest;
+use App\Models\StockHistory; // StockHistory মডেল ইমপোর্ট করা হলো
 
 class ProductController extends Controller
 {
@@ -58,9 +58,8 @@ class ProductController extends Controller
     }
 
     /**
-     * Store a newly created product
+     * Get Dashboard Stats
      */
-
     public function getStats()
     {
         try {
@@ -91,6 +90,9 @@ class ProductController extends Controller
         }
     }
 
+    /**
+     * Store a newly created product
+     */
     public function store(ProductStoreRequest $request)
     {
         try {
@@ -109,6 +111,10 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Show single product
+     */
     public function show($id)
     {
         $product = Product::find($id);
@@ -129,18 +135,19 @@ class ProductController extends Controller
     public function update(ProductUpdateRequest $request, $id)
     {
         try {
+            // সার্ভিস লেভেলে স্টক হিস্টোরি হ্যান্ডেল করা হবে
             $product = $this->productService->updateProduct($id, $request->validated());
 
             return response()->json([
                 'status'  => 'success',
-                'message' => 'Product Updated Successfully',
+                'message' => 'Product and Stock Updated Successfully',
                 'data'    => new ProductResource($product)
             ], 200);
         } catch (Exception $e) {
             Log::error("Product Update Error [ID: $id]: " . $e->getMessage());
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Error to store product'
+                'message' => 'Error to update product: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -162,6 +169,28 @@ class ProductController extends Controller
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Error to Delete product'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get All Stock History for Frontend
+     */
+    public function getStockHistory()
+    {
+        try {
+            $history = StockHistory::with('product:id,name')
+                        ->latest()
+                        ->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data'   => $history
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to load stock history'
             ], 500);
         }
     }

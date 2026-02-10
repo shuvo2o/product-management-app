@@ -13,7 +13,8 @@ const Edit = () => {
         stock: '',
         description: '', 
         status: 'active',
-        category_id: ''
+        category_id: '',
+        note: '' // স্টক পরিবর্তনের কারণ রাখার জন্য নতুন ফিল্ড
     });
 
     const [categories, setCategories] = useState([]);
@@ -22,13 +23,20 @@ const Edit = () => {
     const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState({});
 
+    // টোকেনটি লোকাল স্টোরেজ থেকে নিয়ে আসছি
+    const token = localStorage.getItem('token');
+
     useEffect(() => {
         let isMounted = true;
         const fetchData = async () => {
             try {
                 const [catRes, prodRes] = await Promise.all([
-                    axios.get('/api/categories'),
-                    axios.get(`/api/products/${id}`)
+                    axios.get('/api/categories', {
+                        headers: { 'Authorization': `Bearer ${token}` } // টোকেন যোগ করা হলো
+                    }),
+                    axios.get(`/api/products/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` } // টোকেন যোগ করা হলো
+                    })
                 ]);
 
                 if (isMounted) {
@@ -43,7 +51,8 @@ const Edit = () => {
                             stock: p.stock || '',
                             description: p.description || '',
                             status: p.status || 'active',
-                            category_id: p.category_id || ''
+                            category_id: p.category_id || '',
+                            note: '' // আপডেট করার সময় ডিফল্ট খালি থাকবে
                         });
                         
                         if (p.image) {
@@ -65,7 +74,7 @@ const Edit = () => {
 
         fetchData();
         return () => { isMounted = false; };
-    }, [id]);
+    }, [id, token]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -84,7 +93,6 @@ const Edit = () => {
         setErrors({});
 
         const data = new FormData();
-        // পিওর POST মেথড ব্যবহার করছি (রাউট অনুযায়ী)
         data.append('name', formData.name);
         data.append('sku', formData.sku);
         data.append('price', formData.price);
@@ -92,6 +100,7 @@ const Edit = () => {
         data.append('description', formData.description);
         data.append('category_id', formData.category_id);
         data.append('status', formData.status);
+        data.append('note', formData.note); // Note ডাটাবেজে পাঠানোর জন্য যোগ করা হলো
 
         if (image) {
             data.append('image', image);
@@ -101,17 +110,20 @@ const Edit = () => {
             const response = await axios.post(`/api/products/${id}`, data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}` // এখানে টোকেনটি সবথেকে গুরুত্বপূর্ণ
                 }
             });
 
-            if(response.data.status === 'success') {
-                alert("Product Updated Successfully!");
+            if(response.data.status === 'success' || response.data.message) {
+                alert("Product and Stock History Updated!");
                 navigate('/admin/products');
             }
         } catch (err) {
             if (err.response?.status === 422) {
                 setErrors(err.response.data.errors);
+            } else if (err.response?.status === 401) {
+                alert("Session expired! Please login again.");
             } else {
                 alert("Update failed! Please check console.");
             }
@@ -130,53 +142,48 @@ const Edit = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     
-                    {/* 1. Name */}
                     <div className="col-span-2">
                         <label className="block mb-2 text-sm font-bold text-gray-700">Product Name</label>
                         <input name="name" value={formData.name} onChange={handleChange} className="w-full p-3 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500" />
                         {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name[0]}</p>}
                     </div>
 
-                    {/* 2. Category */}
                     <div>
                         <label className="block mb-2 text-sm font-bold text-gray-700">Category</label>
                         <select name="category_id" value={formData.category_id} onChange={handleChange} className="w-full p-3 bg-white border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500">
                             <option value="">-- Select Category --</option>
                             {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                         </select>
-                        {errors.category_id && <p className="mt-1 text-xs text-red-500">{errors.category_id[0]}</p>}
                     </div>
 
-                    {/* 3. SKU */}
                     <div>
                         <label className="block mb-2 text-sm font-bold text-gray-700">SKU</label>
                         <input name="sku" value={formData.sku} onChange={handleChange} className="w-full p-3 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500" />
-                        {errors.sku && <p className="mt-1 text-xs text-red-500">{errors.sku[0]}</p>}
                     </div>
 
-                    {/* 4. Price */}
                     <div>
                         <label className="block mb-2 text-sm font-bold text-gray-700">Price ($)</label>
                         <input type="number" name="price" value={formData.price} onChange={handleChange} className="w-full p-3 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500" />
-                        {errors.price && <p className="mt-1 text-xs text-red-500">{errors.price[0]}</p>}
                     </div>
 
-                    {/* 5. Stock */}
                     <div>
                         <label className="block mb-2 text-sm font-bold text-gray-700">Stock</label>
                         <input type="number" name="stock" value={formData.stock} onChange={handleChange} className="w-full p-3 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500" />
                         {errors.stock && <p className="mt-1 text-xs text-red-500">{errors.stock[0]}</p>}
                     </div>
 
-                    {/* 6. Description */}
+                    {/* নতুন নোট ফিল্ড: স্টক হিস্টোরিতে কি কারণ দেখাবে */}
                     <div className="col-span-2">
-                        <label className="block mb-2 text-sm font-bold text-gray-700">Description</label>
-                        <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full p-3 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500"></textarea>
-                        {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description[0]}</p>}
+                        <label className="block mb-2 text-sm font-bold text-gray-700">Stock Update Note (Optional)</label>
+                        <input name="note" value={formData.note} onChange={handleChange} placeholder="e.g., Damaged item or Restock" className="w-full p-3 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500" />
                     </div>
 
-                    {/* 7. Status */}
-                    <div className="md:col-span-1">
+                    <div className="col-span-2">
+                        <label className="block mb-2 text-sm font-bold text-gray-700">Description</label>
+                        <textarea name="description" value={formData.description} onChange={handleChange} rows="3" className="w-full p-3 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+
+                    <div>
                         <label className="block mb-2 text-sm font-bold text-gray-700">Status</label>
                         <select name="status" value={formData.status} onChange={handleChange} className="w-full p-3 bg-white border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-500">
                             <option value="active">Active</option>
@@ -184,19 +191,12 @@ const Edit = () => {
                         </select>
                     </div>
 
-                    {/* 8. Image */}
                     <div className="col-span-2 p-6 border-2 border-gray-200 border-dashed bg-gray-50 rounded-2xl">
                         <label className="block mb-3 text-sm font-bold text-gray-700">Product Image</label>
                         <div className="flex items-center gap-6">
-                            <input type="file" onChange={handleImage} className="text-sm text-gray-500 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700" />
-                            {preview && (
-                                <div className="relative">
-                                    <img src={preview} className="object-cover w-24 h-24 border-2 border-white rounded-lg shadow-md" alt="Preview" />
-                                    <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[8px] px-2 py-1 rounded-full uppercase font-bold">Preview</span>
-                                </div>
-                            )}
+                            <input type="file" onChange={handleImage} className="text-sm text-gray-500 cursor-pointer" />
+                            {preview && <img src={preview} className="object-cover w-20 h-20 rounded-lg shadow-md" alt="Preview" />}
                         </div>
-                        {errors.image && <p className="mt-2 text-xs text-red-500">{errors.image[0]}</p>}
                     </div>
                 </div>
 
