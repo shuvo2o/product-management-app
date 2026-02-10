@@ -3,65 +3,72 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CategoryController;
-use App\Http\Controllers\API\User\UserController;
+
+
 
 /*
 |--------------------------------------------------------------------------
-| Public Routes 
+| Public Routes
 |--------------------------------------------------------------------------
 */
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::controller(ProductController::class)->group(function () {
+    Route::get('/products', 'index');
+    Route::get('/products/{id}', 'show');
+});
+
 Route::get('/categories', [CategoryController::class, 'index']);
 
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes 
+| Protected Routes (Auth via Passport)
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:api')->group(function () {
 
+    // Common Auth Routes
+    Route::get('/profile', fn(Request $request) => $request->user());
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard/stats', [ProductController::class, 'getStats']);
 
-    Route::middleware(['role:superadmin|admin'])->group(function () {
-        Route::delete('/users/{id}', [UserController::class, 'destroy']);
-        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
-        Route::delete('/products/{id}', [ProductController::class, 'delete']);
-        Route::post('/users/{id}/approve', [UserController::class, 'approve']);
-
-        Route::get('/pending-users', [UserController::class, 'pendingUsers']);
-        Route::post('/approve-user/{id}', [UserController::class, 'approveUser']);
-        Route::post('/logout', [AuthController::class, 'logout']);
-    });
-
+    /*--- Superadmin Only ---*/
     Route::middleware(['role:superadmin'])->group(function () {
         Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
     });
 
-    /*--- ৩. Create & Update (Admin + Moderator + SuperAdmin) ---*/
+    /*--- Superadmin | Admin ---*/
+    Route::middleware(['role:superadmin|admin'])->group(function () {
+        Route::controller(UserController::class)->group(function () {
+            Route::get('/pending-users', 'pendingUsers');
+            Route::post('/approve-user/{id}', 'approveUser');
+            Route::post('/users/{id}/approve', 'approve');
+            Route::delete('/users/{id}', 'destroy');
+        });
+
+        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+        Route::delete('/products/{id}', [ProductController::class, 'delete']);
+    });
+
+    /*--- Superadmin | Admin | Moderator ---*/
     Route::middleware(['role:superadmin|admin|moderator'])->group(function () {
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::post('/products/{id}', [ProductController::class, 'update']);
-        Route::get('/stock-history', [ProductController::class, 'getStockHistory']);
-        Route::post('/categories', [CategoryController::class, 'store']);
-        Route::put('/categories/{id}', [CategoryController::class, 'update']);
-    });
+        
+        // Product Management
+        Route::controller(ProductController::class)->group(function () {
+            Route::post('/products', 'store');
+            Route::post('/products/{id}', 'update'); 
+            Route::get('/stock-history', 'getStockHistory');
+        });
 
-    /*--- ৪. General User (Customer) Routes ---*/
-    // Route::middleware(['role:user', 'check.approved'])->group(function () {
-    //     Route::get('/my-orders', [OrderController::class, 'index']);
-    //     Route::post('/cart/add', [CartController::class, 'store']);
-    // });
-
-    Route::get('/profile', function (Request $request) {
-        return $request->user();
+        // Category Management
+        Route::controller(CategoryController::class)->group(function () {
+            Route::post('/categories', 'store');
+            Route::put('/categories/{id}', 'update');
+        });
     });
-    Route::post('/logout', [AuthController::class, 'logout']);
 });
