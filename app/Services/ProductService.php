@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Exception;
 use App\Models\Product;
+use App\Models\StockHistory; // নতুন মডেলটি ইমপোর্ট করুন
 use Illuminate\Support\Str;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ class ProductService
         }
         return $query->latest()->paginate(10);
     }
+
     public function createProduct(array $data)
     {
         $data['slug'] = Str::slug($data['name']);
@@ -36,16 +38,23 @@ class ProductService
 
         return Product::create($data);
     }
+
     public function updateProduct($id, array $data)
     {
         DB::beginTransaction();
         try {
             $product = Product::findOrFail($id);
+            
+            // পরিবর্তনের আগের স্টক সেভ করে রাখা
+            $oldStock = $product->stock;
+            
             $updateData = collect($data)->except(['_method'])->toArray();
 
             if (isset($updateData['name'])) {
                 $updateData['slug'] = Str::slug($updateData['name']);
             }
+
+            // Image Update Logic
             if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
                 if ($product->image) {
                     Storage::disk('public')->delete($product->image);
@@ -55,7 +64,24 @@ class ProductService
                 unset($updateData['image']);
             }
 
+            // ১. প্রোডাক্ট আপডেট করুন
             $product->update($updateData);
+
+            // ২. স্টক হিস্টোরি রেকর্ড করার লজিক (নতুন সংযোজন)
+            $newStock = isset($updateData['stock']) ? (int)$updateData['stock'] : $oldStock;
+
+            if ($oldStock != $newStock) {
+                $diff = $newStock - $oldStock;
+
+                StockHistory::create([
+                    'product_id' => $product->id,
+                    'type'       => $diff > 0 ? 'in' : 'out',
+                    'quantity'   => abs($diff),
+                    'old_stock'  => $oldStock,
+                    'new_stock'  => $newStock,
+                    'note'       => $data['note'] ?? 'Stock updated manually',
+                ]);
+            }
 
             DB::commit();
             return $product;

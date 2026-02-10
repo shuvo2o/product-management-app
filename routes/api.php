@@ -49,6 +49,7 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware(['role:superadmin|admin|moderator'])->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
         Route::post('/products/{id}', [ProductController::class, 'update']);
+        Route::get('/stock-history', [ProductController::class, 'getStockHistory']);
         Route::post('/categories', [CategoryController::class, 'store']);
         Route::put('/categories/{id}', [CategoryController::class, 'update']);
     });

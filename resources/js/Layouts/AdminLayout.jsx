@@ -53,18 +53,16 @@ const AdminLayout = ({ children }) => {
         });
     };
 
-    // মেনু আইটেমগুলো এখানে ডিফাইন করা
     const menuItems = [
         { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
         { name: 'Categories', path: '/admin/categories', icon: '📂' },
         { name: 'Products List', path: '/admin/products', icon: '📦' },
         { name: 'Add New Product', path: '/admin/products/create', icon: '➕' },
-        { name: 'Users Management', path: '/admin/users', icon: '👥' }, // এই পাথটি App.jsx এর সাথে মিল থাকতে হবে
+        { name: 'Users Management', path: '/admin/users', icon: '👥' }, 
+        { name: 'Stock History', path: '/admin/stock-history', icon: '👥' }, 
     ];
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-    // বর্তমান পেজের নাম বের করার জন্য লজিক (Header এ দেখানোর জন্য)
     const currentMenuItem = menuItems.find(item => location.pathname === item.path) || 
                           menuItems.find(item => location.pathname.startsWith(item.path + '/'));
 
