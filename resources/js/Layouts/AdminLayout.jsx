@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Swal from 'sweetalert2'; // SweetAlert ইমপোর্ট
+import Swal from 'sweetalert2';
 
 const AdminLayout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // লগআউট ফাংশনালিটি উইথ সুইট অ্যালার্ট
     const handleLogout = () => {
         Swal.fire({
             title: 'Are you sure?',
             text: "You will be logged out from your account!",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#4F46E5', // Indigo-600 (আপনার থিমের সাথে মিল রেখে)
+            confirmButtonColor: '#4F46E5',
             cancelButtonColor: '#d33',
             confirmButtonText: 'Yes, Logout!',
             cancelButtonText: 'Cancel',
@@ -25,8 +24,6 @@ const AdminLayout = ({ children }) => {
             if (result.isConfirmed) {
                 try {
                     const token = localStorage.getItem('token');
-                    
-                    // ব্যাকএন্ড এপিআই কল (যদি রাউট তৈরি থাকে)
                     await axios.post('http://localhost:8000/api/logout', {}, {
                         headers: { 
                             Authorization: `Bearer ${token}`,
@@ -36,12 +33,10 @@ const AdminLayout = ({ children }) => {
                 } catch (error) {
                     console.error("Logout API Error:", error);
                 } finally {
-                    // লোকাল ডাটা ক্লিয়ার
                     localStorage.removeItem('token');
                     localStorage.removeItem('role');
                     localStorage.removeItem('user');
 
-                    // সাকসেস মেসেজ দেখানো
                     Swal.fire({
                         title: 'Logged Out!',
                         text: 'Redirecting to login page...',
@@ -50,7 +45,6 @@ const AdminLayout = ({ children }) => {
                         showConfirmButton: false
                     });
 
-                    // ১.৫ সেকেন্ড পর লগইন পেজে পাঠানো
                     setTimeout(() => {
                         navigate('/login');
                     }, 1500);
@@ -59,20 +53,23 @@ const AdminLayout = ({ children }) => {
         });
     };
 
+    // মেনু আইটেমগুলো এখানে ডিফাইন করা
     const menuItems = [
         { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
         { name: 'Categories', path: '/admin/categories', icon: '📂' },
         { name: 'Products List', path: '/admin/products', icon: '📦' },
         { name: 'Add New Product', path: '/admin/products/create', icon: '➕' },
-        { name: 'Users Management', path: '/admin/users', icon: '👥' },
+        { name: 'Users Management', path: '/admin/users', icon: '👥' }, // এই পাথটি App.jsx এর সাথে মিল থাকতে হবে
     ];
 
-    // ইউজার নেম ডাইনামিক করা (যদি লোকাল স্টোরেজে থাকে)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // বর্তমান পেজের নাম বের করার জন্য লজিক (Header এ দেখানোর জন্য)
+    const currentMenuItem = menuItems.find(item => location.pathname === item.path) || 
+                          menuItems.find(item => location.pathname.startsWith(item.path + '/'));
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            {/* Sidebar - Desktop */}
             <aside className="flex-col hidden w-64 text-white shrink-0 bg-slate-900 md:flex">
                 <div className="p-6 border-b border-slate-800">
                     <h1 className="text-xl font-bold tracking-wider text-indigo-400">ADMIN <span className="text-white">HUB</span></h1>
@@ -85,10 +82,11 @@ const AdminLayout = ({ children }) => {
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${location.pathname === item.path
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                                location.pathname === item.path || location.pathname.startsWith(item.path + '/')
                                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
                                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                                }`}
+                            }`}
                         >
                             <span>{item.icon}</span>
                             <span className="font-medium">{item.name}</span>
@@ -115,12 +113,10 @@ const AdminLayout = ({ children }) => {
                 </div>
             </aside>
 
-            {/* Main Content Area */}
             <div className="flex flex-col flex-1">
-                {/* Header / Navbar */}
                 <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-8 bg-white border-b border-gray-200">
                     <h2 className="text-lg font-semibold tracking-tight text-gray-700 uppercase">
-                        {menuItems.find(item => item.path === location.pathname)?.name || 'Admin Panel'}
+                        {currentMenuItem?.name || 'Admin Panel'}
                     </h2>
 
                     <div className="flex items-center gap-4">
@@ -134,7 +130,6 @@ const AdminLayout = ({ children }) => {
                     </div>
                 </header>
 
-                {/* Page Content */}
                 <main className="p-8">
                     {children}
                 </main>
