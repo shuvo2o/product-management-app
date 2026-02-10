@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\User; 
+namespace App\Http\Controllers\API; 
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -10,14 +10,14 @@ use Exception;
 
 class UserController extends Controller
 {
-
+    // পেন্ডিং ইউজারদের লিস্ট (is_approved = 0)
     public function pendingUsers(): JsonResponse
     {
         try {
             $users = User::where('is_approved', 0)->latest()->get();
             return response()->json([
                 'status' => 'success',
-                'data' => $users
+                'data' => $users // এখানে 'data' কী-তে লিস্ট পাঠানো হচ্ছে
             ], 200);
         } catch (Exception $e) {
             return response()->json([
@@ -27,12 +27,11 @@ class UserController extends Controller
         }
     }
 
- 
+    // ইউজার অ্যাপ্রুভ করা
     public function approveUser($id): JsonResponse
     {
         try {
             $user = User::findOrFail($id); 
-
             $user->is_approved = 1;
             $user->save();
 
@@ -43,11 +42,12 @@ class UserController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'User not found or update failed'
+                'message' => 'User update failed'
             ], 404);
         }
     }
 
+    // ইউজার ডিলিট করা
     public function destroy($id): JsonResponse
     {
         try {

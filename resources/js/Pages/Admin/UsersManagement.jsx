@@ -6,7 +6,6 @@ const UsersManagement = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // পেন্ডিং ইউজারদের লিস্ট নিয়ে আসা
     const fetchPendingUsers = async () => {
         try {
             setLoading(true);
@@ -14,7 +13,12 @@ const UsersManagement = () => {
             const res = await axios.get('http://localhost:8000/api/pending-users', {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setUsers(res.data);
+            
+            // লারাভেল রেসপন্স থেকে 'data' কী-টি এক্সেস করা হচ্ছে
+            if (res.data && res.data.status === 'success') {
+                setUsers(res.data.data); 
+            }
+            
             setLoading(false);
         } catch (err) {
             console.error("Error fetching users:", err);
@@ -26,7 +30,6 @@ const UsersManagement = () => {
         fetchPendingUsers();
     }, []);
 
-    // ইউজার এপ্রুভ করার ফাংশন
     const handleApprove = (id) => {
         Swal.fire({
             title: 'Approve User?',
@@ -46,51 +49,47 @@ const UsersManagement = () => {
                     Swal.fire('Approved!', 'User has been approved.', 'success');
                     fetchPendingUsers(); 
                 } catch (err) {
-                    Swal.fire('Error', 'Something went wrong!', 'error');
+                    Swal.fire('Error', 'Update failed!', 'error');
                 }
             }
         });
     };
 
-    // ইউজার ডিলিট করার ফাংশন
     const handleDelete = (id) => {
         Swal.fire({
             title: 'Are you sure?',
-            text: "You won't be able to revert this!",
+            text: "This cannot be undone!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#EF4444',
-            cancelButtonColor: '#6B7280',
             confirmButtonText: 'Yes, delete it!'
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
                     const token = localStorage.getItem('token');
+                    // Route: DELETE /api/users/{id}
                     await axios.delete(`http://localhost:8000/api/users/${id}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     
-                    Swal.fire('Deleted!', 'User has been removed.', 'success');
+                    Swal.fire('Deleted!', 'User removed.', 'success');
                     fetchPendingUsers(); 
                 } catch (err) {
-                    Swal.fire('Error', 'Failed to delete user!', 'error');
+                    Swal.fire('Error', 'Deletion failed!', 'error');
                 }
             }
         });
     };
 
-    if (loading) {
-        return <div className="p-6 text-center">Loading users...</div>;
-    }
+    if (loading) return <div className="p-6 text-center">Loading...</div>;
 
     return (
         <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
-            <h2 className="mb-6 text-2xl font-bold text-gray-800">Pending Approval Requests</h2>
-            
+            <h2 className="mb-6 text-2xl font-bold text-gray-800">Pending Requests</h2>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
                     <thead>
-                        <tr className="text-sm text-gray-400 uppercase border-b border-gray-100">
+                        <tr className="text-sm text-gray-400 uppercase border-b">
                             <th className="px-2 py-4">Name</th>
                             <th className="px-2 py-4">Email</th>
                             <th className="px-2 py-4 text-center">Action</th>
@@ -98,28 +97,16 @@ const UsersManagement = () => {
                     </thead>
                     <tbody>
                         {users.length > 0 ? users.map((user) => (
-                            <tr key={user.id} className="transition border-b border-gray-50 hover:bg-gray-50">
-                                <td className="px-2 py-4 font-medium text-gray-700">{user.name}</td>
-                                <td className="px-2 py-4 text-gray-600">{user.email}</td>
+                            <tr key={user.id} className="border-b hover:bg-gray-50">
+                                <td className="px-2 py-4 font-medium">{user.name}</td>
+                                <td className="px-2 py-4">{user.email}</td>
                                 <td className="flex justify-center gap-2 px-2 py-4">
-                                    <button 
-                                        onClick={() => handleApprove(user.id)}
-                                        className="px-4 py-2 font-bold text-green-700 transition bg-green-100 rounded-lg hover:bg-green-200"
-                                    >
-                                        Approve
-                                    </button>
-                                    <button 
-                                        onClick={() => handleDelete(user.id)}
-                                        className="px-4 py-2 font-bold text-red-700 transition bg-red-100 rounded-lg hover:bg-red-200"
-                                    >
-                                        Delete
-                                    </button>
+                                    <button onClick={() => handleApprove(user.id)} className="px-4 py-2 text-green-700 bg-green-100 rounded-lg">Approve</button>
+                                    <button onClick={() => handleDelete(user.id)} className="px-4 py-2 text-red-700 bg-red-100 rounded-lg">Delete</button>
                                 </td>
                             </tr>
                         )) : (
-                            <tr>
-                                <td colSpan="3" className="py-10 text-center text-gray-400">No pending requests found.</td>
-                            </tr>
+                            <tr><td colSpan="3" className="py-10 text-center text-gray-400">No pending requests.</td></tr>
                         )}
                     </tbody>
                 </table>
