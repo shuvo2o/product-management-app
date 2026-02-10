@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use Exception;
 use App\Models\Product;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Services\ProductService;
 use Illuminate\Support\Facades\DB;
@@ -180,8 +181,8 @@ class ProductController extends Controller
     {
         try {
             $history = StockHistory::with('product:id,name')
-                        ->latest()
-                        ->get();
+                ->latest()
+                ->get();
 
             return response()->json([
                 'status' => 'success',
@@ -193,5 +194,12 @@ class ProductController extends Controller
                 'message' => 'Failed to load stock history'
             ], 500);
         }
+    }
+    public function exportPdf()
+    {
+        $history = StockHistory::with('product')->latest()->get();
+
+        $pdf = Pdf::loadView('exports.stock_pdf', compact('history'));
+        return $pdf->download('inventory_report.pdf');
     }
 }
