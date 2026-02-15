@@ -18,11 +18,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role' => RoleMiddleware::class,
-            'permission' => PermissionMiddleware::class,
-            'approved' => CheckApprovedUser::class, // এখানে 'check.approved' ছিল, শুধু 'approved' করে দিন
-            'admin' => AdminMiddleware::class,
-            'moderator' => ModeratorMiddleware::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'approved' => \App\Http\Middleware\CheckApprovedUser::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'moderator' => \App\Http\Middleware\ModeratorMiddleware::class,
+        ]);
+        $middleware->validateCsrfTokens(except: [
+            '/api/payment/success',
+            '/api/payment/fail',
+            '/api/payment/cancel',
+            '/api/payment/ipn',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
