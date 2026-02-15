@@ -100,7 +100,7 @@ const Checkout = () => {
                                 <FaRegCheckCircle className="text-indigo-600" /> Review Your Order
                             </h2>
                             <div className="flex flex-col gap-6 md:flex-row">
-                                <div className="flex-shrink-0 w-full h-40 overflow-hidden bg-gray-100 md:w-40 rounded-xl">
+                                <div className="w-full h-40 overflow-hidden bg-gray-100 shrink-0 md:w-40 rounded-xl">
                                     <img src={product.image} alt={product.name} className="object-cover w-full h-full" />
                                 </div>
                                 <div className="flex-1">
