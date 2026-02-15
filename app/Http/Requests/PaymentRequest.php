@@ -13,14 +13,13 @@ class PaymentRequest extends FormRequest
 
     public function rules()
     {
-        return [
-            'amount'  => 'required|numeric|min:10|max:500000',
-            'phone'   => ['required', 'regex:/^(?:\+88|88)?(01[3-9]\d{8})$/'], 
-            'address' => 'required|string|min:10|max:255',
-        ];
+     return [
+        'amount'  => 'required|numeric', 
+        'phone'   => 'required', 
+        'address' => 'required|string', 
+    ];
     }
 
-    // ঐচ্ছিক: এরর মেসেজগুলো কাস্টমাইজ করতে পারেন
     public function messages()
     {
         return [
