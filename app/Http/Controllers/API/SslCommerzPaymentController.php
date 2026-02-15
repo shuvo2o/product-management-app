@@ -78,54 +78,60 @@ class SslCommerzPaymentController extends Controller
         }
     }
 
-    public function success(Request $request)
-    {
-        $tran_id = $request->input('tran_id');
-        $val_id = $request->input('val_id');
+public function success(Request $request)
+{
+    $tran_id = $request->input('tran_id');
+    $val_id = $request->input('val_id');
+    $frontendUrl = env('FRONTEND_URL', 'http://localhost:8000'); 
 
-        $order = Order::where('transaction_id', $tran_id)->first();
+    $order = Order::where('transaction_id', $tran_id)->first();
 
-        if (!$order) {
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        $verify_url = env('SSLC_IS_SANDBOX')
-            ? "https://sandbox.sslcommerz.com/validator/api/validationserverphp.php"
-            : "https://securepay.sslcommerz.com/validator/api/validationserverphp.php";
-
-        /** @var Response $response */
-        // ভ্যালিডেশনের সময়ও withoutVerifying() ব্যবহার করা হয়েছে [cite: 2026-02-15]
-        $response = Http::withoutVerifying()->get($verify_url, [
-            'val_id'       => $val_id,
-            'store_id'     => env('SSLC_STORE_ID'),
-            'store_passwd' => env('SSLC_STORE_PASSWORD'),
-            'format'       => 'json'
-        ]);
-
-        if ($response->successful()) {
-            $result = $response->json();
-            if ($result['status'] == 'VALIDATED' || $result['status'] == 'VALID') {
-                if ($order->amount == $result['amount'] && $order->status == 'Pending') {
-                    $order->update(['status' => 'Complete']);
-                    return redirect('http://localhost:3000/payment/success?id=' . $tran_id);
-                }
-            }
-        }
-
-        $order->update(['status' => 'Failed']);
-        return redirect('http://localhost:3000/payment/fail');
+    if (!$order) {
+        return redirect()->away($frontendUrl . '/payment-failed?msg=order_not_found');
     }
+
+    // এই অংশটুকু আপনার কোডে ছিল না, তাই এরর আসছিল
+    $verify_url = env('SSLC_IS_SANDBOX')
+        ? "https://sandbox.sslcommerz.com/validator/api/validationserverphp.php"
+        : "https://securepay.sslcommerz.com/validator/api/validationserverphp.php";
+
+    // এখানে $response তৈরি করা হচ্ছে
+    $response = Http::withoutVerifying()->get($verify_url, [
+        'val_id'       => $val_id,
+        'store_id'     => env('SSLC_STORE_ID'),
+        'store_passwd' => env('SSLC_STORE_PASSWORD'),
+        'format'       => 'json'
+    ]);
+
+    // এখন সফলভাবে চেক হবে
+   // এই কোডটুকু ১০৪ নং লাইনের নিচে বসান
+$verify_url = env('SSLC_IS_SANDBOX')
+    ? "https://sandbox.sslcommerz.com/validator/api/validationserverphp.php"
+    : "https://securepay.sslcommerz.com/validator/api/validationserverphp.php";
+
+$response = Http::withoutVerifying()->get($verify_url, [
+    'val_id'       => $val_id,
+    'store_id'     => env('SSLC_STORE_ID'),
+    'store_passwd' => env('SSLC_STORE_PASSWORD'),
+    'format'       => 'json'
+]);
+
+    $order->update(['status' => 'Failed']);
+    return redirect()->away($frontendUrl . '/payment-failed');
+}
 
     public function fail(Request $request)
     {
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:8000');
         Order::where('transaction_id', $request->tran_id)->update(['status' => 'Failed']);
-        return redirect('http://localhost:3000/payment/fail');
+        return redirect()->away($frontendUrl . '/payment-failed'); // ফেইল হলে আলাদা পেজ [cite: 2026-02-15]
     }
 
     public function cancel(Request $request)
     {
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:8000');
         Order::where('transaction_id', $request->tran_id)->update(['status' => 'Canceled']);
-        return redirect('http://localhost:3000/payment/cancel');
+        return redirect()->away($frontendUrl . '/payment-cancelled'); // ক্যান্সেল হলে আলাদা পেজ
     }
 
     public function ipn(Request $request)

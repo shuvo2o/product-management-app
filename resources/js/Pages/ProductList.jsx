@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaCartPlus, FaBolt, FaShoppingCart } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom'; // রাউটিং এর জন্য [cite: 2026-02-15]
 
 const App = () => {
     const [products, setProducts] = useState([]);
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [cart, setCart] = useState([]);
+    const navigate = useNavigate(); // পেজ নেভিগেশনের জন্য [cite: 2026-02-15]
 
     // --- AUTH LOGIC START ---
     const [user, setUser] = useState(null);
@@ -23,9 +26,14 @@ const App = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
-        window.location.reload(); 
+        window.location.reload();
     };
     // --- AUTH LOGIC END ---
+
+    // --- CART LOGIC ---
+    const addToCart = (product) => {
+        setCart([...cart, product]);
+    };
 
     const fetchProducts = (url = '/api/products') => {
         setLoading(true);
@@ -52,7 +60,7 @@ const App = () => {
         }, 500);
         return () => clearTimeout(delayDebounceFn);
     }, [search]);
-
+    console.log("Home Page Loaded")
     return (
         <div className="min-h-screen p-6 mx-auto max-w-7xl bg-gray-50">
             {/* Header Section */}
@@ -80,32 +88,35 @@ const App = () => {
                     </div>
                 </div>
 
-                {/* --- REACT ICON PROFILE SECTION --- */}
-                <div className="flex items-center gap-3">
+                {/* --- CART & PROFILE SECTION --- */}
+                <div className="flex items-center gap-5">
+                    <div className="relative p-2 transition-all rounded-full cursor-pointer hover:bg-gray-100 group">
+                        <FaShoppingCart size={24} className="text-gray-600 group-hover:text-indigo-600" />
+                        {cart.length > 0 && (
+                            <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm">
+                                {cart.length}
+                            </span>
+                        )}
+                    </div>
+
                     {user ? (
                         <div className="flex items-center gap-3 p-1.5 pr-3">
-                            {/* Profile Icon with Dynamic Link */}
-                            <a 
+                            <a
                                 href={
                                     user.role === 'superadmin' ? '/super-admin/dashboard' :
-                                    user.role === 'admin' ? '/admin/dashboard' :
-                                    user.role === 'moderator' ? '/moderator/dashboard' : '/user/dashboard'
+                                        user.role === 'admin' ? '/admin/dashboard' :
+                                            user.role === 'moderator' ? '/moderator/dashboard' : '/user/dashboard'
                                 }
                                 title={`Welcome ${user.name}! Click for Dashboard`}
                                 className="text-indigo-600 transition-transform duration-200 hover:scale-110"
                             >
                                 <FaUserCircle size={30} />
                             </a>
-
-                     
                         </div>
                     ) : (
                         <div className="flex items-center gap-2">
                             <a href="/login" className="px-5 py-2.5 text-sm font-bold text-gray-700 transition-all bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
                                 Login
-                            </a>
-                            <a href="/register" className="hidden sm:block px-5 py-2.5 text-sm font-bold text-white transition-all bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-md">
-                                Register
                             </a>
                         </div>
                     )}
@@ -119,7 +130,6 @@ const App = () => {
                 </div>
             ) : (
                 <>
-                    {/* Products Grid */}
                     <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {products.length > 0 ? (
                             products.map((product) => (
@@ -150,23 +160,35 @@ const App = () => {
                                         <h2 className="mb-1 text-lg font-bold leading-tight text-gray-800 truncate" title={product.name}>
                                             {product.name}
                                         </h2>
-                                        <p className="text-gray-400 text-[10px] mb-3 truncate italic bg-gray-50 p-1 rounded">
-                                            Slug: {product.slug}
-                                        </p>
-                                        <p className="mb-5 text-xs leading-relaxed text-gray-500 line-clamp-3">
-                                            {product.description || 'No detailed description provided for this product.'}
-                                        </p>
-                                        <div className="flex items-center justify-between pt-4 mt-auto border-t border-gray-50">
+
+                                        <div className="flex items-center justify-between mt-2 mb-4">
                                             <div>
-                                                <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Current Price</p>
-                                                <p className="text-2xl font-black text-gray-900">${product.price}</p>
+                                                <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Price</p>
+                                                <p className="text-xl font-black text-gray-900">${product.price}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Availability</p>
+                                                <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Stock</p>
                                                 <p className={`text-sm font-bold ${product.stock < 10 ? 'text-red-500' : 'text-emerald-600'}`}>
                                                     {product.stock} Units
                                                 </p>
                                             </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-100">
+                                            <button
+                                                className="flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-gray-700 transition-all bg-gray-100 rounded-xl hover:bg-gray-200"
+                                                onClick={() => addToCart(product)}
+                                            >
+                                                <FaCartPlus className="text-indigo-600" />
+                                                Add to Cart
+                                            </button>
+                                            <button
+                                                className="flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-white transition-all bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm"
+                                                onClick={() => navigate(`/checkout/${product.id}`, { state: { product } })} // এখানে অন্য পেজে পাঠাচ্ছে [cite: 2026-02-15]
+                                            >
+                                                <FaBolt className="text-yellow-300" />
+                                                Buy Now
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -178,7 +200,6 @@ const App = () => {
                         )}
                     </div>
 
-                    {/* Pagination */}
                     <div className="flex flex-wrap justify-center gap-3 pb-10 mt-16">
                         {links && links.map((link, index) => (
                             <button
@@ -186,8 +207,8 @@ const App = () => {
                                 disabled={!link.url || link.active}
                                 onClick={() => fetchProducts(link.url)}
                                 className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${link.active
-                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-105'
-                                        : 'bg-white text-gray-600 hover:bg-indigo-50 border-gray-200'
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-105'
+                                    : 'bg-white text-gray-600 hover:bg-indigo-50 border-gray-200'
                                     } ${!link.url ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:shadow-sm'}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

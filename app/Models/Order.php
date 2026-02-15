@@ -15,6 +15,6 @@ class Order extends Model
         'address',
         'transaction_id',
         'status',
-        'currency',
+        'currency'
     ];
 }
