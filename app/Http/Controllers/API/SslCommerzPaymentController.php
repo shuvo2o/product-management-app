@@ -59,7 +59,6 @@ class SslCommerzPaymentController extends Controller
                 : "https://securepay.sslcommerz.com/gwprocess/v4/api.php";
 
             /** @var Response $response */
-            // withoutVerifying() যোগ করা হয়েছে লোকালহোস্ট সাপোর্ট নিশ্চিত করতে [cite: 2026-02-15]
             $response = Http::withoutVerifying()->asForm()->post($api_url, $post_data);
 
             if ($response->successful()) {
@@ -94,7 +93,6 @@ class SslCommerzPaymentController extends Controller
             : "https://securepay.sslcommerz.com/validator/api/validationserverphp.php";
 
         /** @var Response $response */
-        // ভ্যালিডেশনের সময়ও withoutVerifying() ব্যবহার করা হয়েছে [cite: 2026-02-15]
         $response = Http::withoutVerifying()->get($verify_url, [
             'val_id'       => $val_id,
             'store_id'     => env('SSLC_STORE_ID'),
